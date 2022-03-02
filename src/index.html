@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Hello World!</title>
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline';" />
+
+    <script src="./jexcel.js"></script>
+    <script src="./jsuites.js"></script>
+
+    <link rel="stylesheet" href="./jexcel.css" />
+    <link rel="stylesheet" href="./jsuites.css" />
+</head>
+
+<body>
+    <h1>Hello World!</h1>
+    <div id="mytable"></div>
+    <script>
+        const data = [
+            [100, 200, 300, 400, 500],
+            [300, 400, 500, 600, 700]
+        ];
+        const table = document.getElementById('mytable');
+
+        jexcel(table, {
+            data: data
+        });
+        console.log(table.jexcel.getJson());
+    </script>
+</body>
+
+</html>
