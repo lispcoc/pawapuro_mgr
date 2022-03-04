@@ -4,29 +4,159 @@
 <head>
     <meta charset="UTF-8" />
     <title>Hello World!</title>
-    <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline';" />
 
     <script src="./jexcel.js"></script>
     <script src="./jsuites.js"></script>
-
+    <script src="./index.js"></script>
+    <script src="./vue.js"></script>
     <link rel="stylesheet" href="./jexcel.css" />
     <link rel="stylesheet" href="./jsuites.css" />
 </head>
 
 <body>
-    <h1>Hello World!</h1>
     <div id="mytable"></div>
-    <script>
-        const data = [
-            [100, 200, 300, 400, 500],
-            [300, 400, 500, 600, 700]
-        ];
-        const table = document.getElementById('mytable');
+    <div id="app">
+        <table class="table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>ミート</th>
+                <th>パワー</th>
+                <th>走力</th>
+                <th>肩力</th>
+                <th>守備力</th>
+                <th>補給</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(d, idx) in data">
+                <td>{{ d.name }}</td>
+                <td>
+                    <b v-bind:style="{color:rankColor(d.meet)}">
+                        {{ rank( d.meet ) }}
+                    </b>
+                    ({{ d.meet }})
+                </td>
+                <td>
+                    <b v-bind:style="{color:rankColor(d.power)}">
+                        {{ rank( d.power ) }}
+                    </b>
+                    ({{ d.power }})
+                </td>
+                <td>
+                    <b v-bind:style="{color:rankColor(d.run)}">
+                        {{ rank( d.run ) }}
+                    </b>
+                    ({{ d.run }})
+                </td>
+                <td>
+                    <b v-bind:style="{color:rankColor(d.arm)}">
+                        {{ rank( d.arm ) }}
+                    </b>
+                    ({{ d.arm }})
+                </td>
+                <td>
+                    <b v-bind:style="{color:rankColor(d.def)}">
+                        {{ rank( d.def ) }}
+                    </b>
+                    ({{ d.def }})
+                </td>
+                <td>
+                    <b v-bind:style="{color:rankColor(d.err)}">
+                        {{ rank( d.err ) }}
+                    </b>
+                    ({{ d.err }})
+                </td>
+                <td><button v-on:click="swap(idx, idx - 1)">↑</button></td>
+                <td><input v-model="d.meet"></td>
+              </tr>
+            </tbody>
+          </table>
+          <button v-on:click="addNewLine()">New Line</button>
+          {{ data }}
+    </div>
 
-        jexcel(table, {
-            data: data
-        });
-        console.log(table.jexcel.getJson());
+
+    <script>
+    var data = [{
+
+    }];
+    function replaceArrayElements(array, targetId, sourceId) {
+        return array.reduce((resultArray, element, id, originalArray) => [
+            ...resultArray,
+            id === targetId ? originalArray[sourceId] :
+            id === sourceId ? originalArray[targetId] :
+            element
+        ], []);
+    }
+
+    var app = new Vue({
+        el: '#app',
+        data: {
+            message: 'Hello Vue!',
+            data: [
+            ]
+        },
+        methods: {
+            swap: function(idx0, idx1) {
+                console.log(this.data[idx0]);
+                console.log(this.data[idx1]);
+                if(this.data[idx0] && this.data[idx1]) {
+                    this.data = replaceArrayElements(this.data, idx0, idx1);
+                }
+            },
+            rank: function(val) {
+                const iter = [
+                    {rank: "G", min: 0, max: 19, color: "#000000"},
+                    {rank: "F", min: 20, max: 39, color: "#4f81bd"},
+                    {rank: "E", min: 40, max: 49, color: "#00b050"},
+                    {rank: "D", min: 50, max: 59, color: "#ffc000"},
+                    {rank: "C", min: 60, max: 69, color: "#f79646"},
+                    {rank: "B", min: 70, max: 79, color: "#ff0000"},
+                    {rank: "A", min: 80, max: 89, color: "#d99594"},
+                    {rank: "S", min: 90, max: 100, color: "#e5b8b7"},
+                ]
+                var rank = "G";
+                for(const it of iter) {
+                    if(it.min <= val && it.max >= val) {
+                        rank = it.rank;
+                    }
+                }
+                return rank
+            },
+            rankColor: function(val) {
+                const iter = [
+                    {rank: "G", min: 0, max: 19, color: "#000000"},
+                    {rank: "F", min: 20, max: 39, color: "#4f81bd"},
+                    {rank: "E", min: 40, max: 49, color: "#00b050"},
+                    {rank: "D", min: 50, max: 59, color: "#ffc000"},
+                    {rank: "C", min: 60, max: 69, color: "#f79646"},
+                    {rank: "B", min: 70, max: 79, color: "#ff0000"},
+                    {rank: "A", min: 80, max: 89, color: "#d99594"},
+                    {rank: "S", min: 90, max: 100, color: "#e5b8b7"},
+                ]
+                var color = "#000000";
+                for(const it of iter) {
+                    if(it.min <= val && it.max >= val) {
+                        color = it.color;
+                    }
+                }
+                return color
+            },
+            addNewLine: function(){
+                const blank = {
+                    name: 'New',
+                    meet: 0,
+                    power: 0,
+                    run: 0,
+                    arm: 0,
+                    def: 0,
+                    err: 0,
+                };
+                this.data.push(blank);
+            }
+        }
+    });
     </script>
 </body>
 
