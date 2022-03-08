@@ -5,158 +5,310 @@
     <meta charset="UTF-8" />
     <title>Hello World!</title>
 
+    <script src="./jquery-3.6.0.min.js"></script>
     <script src="./jexcel.js"></script>
     <script src="./jsuites.js"></script>
-    <script src="./index.js"></script>
+    <script src="./const.js"></script>
+    <script src="./lib.js"></script>
     <script src="./vue.js"></script>
+    <script src="./index.js"></script>
     <link rel="stylesheet" href="./jexcel.css" />
     <link rel="stylesheet" href="./jsuites.css" />
+    <link rel="stylesheet" href="./index.css" />
 </head>
 
 <body>
-    <div id="mytable"></div>
     <div id="app">
+        <button id="openFile">Open</button>
+        <button id="saveFile">Save</button>
+        <button id="overwriteSaveFile">
+            <span v-if="modify">*Overwrite</span>
+            <span v-else>Overwrite</span>
+        </button>
         <table class="table">
             <thead>
-              <tr>
-                <th>Name</th>
-                <th>ミート</th>
-                <th>パワー</th>
-                <th>走力</th>
-                <th>肩力</th>
-                <th>守備力</th>
-                <th>補給</th>
-              </tr>
+                <tr>
+                    <th v-for="(p, idx) in params">
+                        {{ p.title }}
+                    </th>
+                </tr>
             </thead>
             <tbody>
-              <tr v-for="(d, idx) in data">
-                <td>{{ d.name }}</td>
-                <td>
-                    <b v-bind:style="{color:rankColor(d.meet)}">
-                        {{ rank( d.meet ) }}
-                    </b>
-                    ({{ d.meet }})
-                </td>
-                <td>
-                    <b v-bind:style="{color:rankColor(d.power)}">
-                        {{ rank( d.power ) }}
-                    </b>
-                    ({{ d.power }})
-                </td>
-                <td>
-                    <b v-bind:style="{color:rankColor(d.run)}">
-                        {{ rank( d.run ) }}
-                    </b>
-                    ({{ d.run }})
-                </td>
-                <td>
-                    <b v-bind:style="{color:rankColor(d.arm)}">
-                        {{ rank( d.arm ) }}
-                    </b>
-                    ({{ d.arm }})
-                </td>
-                <td>
-                    <b v-bind:style="{color:rankColor(d.def)}">
-                        {{ rank( d.def ) }}
-                    </b>
-                    ({{ d.def }})
-                </td>
-                <td>
-                    <b v-bind:style="{color:rankColor(d.err)}">
-                        {{ rank( d.err ) }}
-                    </b>
-                    ({{ d.err }})
-                </td>
-                <td><button v-on:click="swap(idx, idx - 1)">↑</button></td>
-                <td><input v-model="d.meet"></td>
-              </tr>
+                <tr v-for="(d, idx) in data">
+                    <td v-for="(p, idx) in params">
+                        <span v-if="p.type === 'status'">
+                            <b v-bind:style="{color:rankColor(d[p.id])}">{{ rank( d[p.id] ) }}</b>
+                            ({{ d[p.id] }})
+                        </span>
+                        <span v-else-if="p.type === 'special'">
+                            <span v-html="specialText( d[p.id] )"></span>
+                        </span>
+                        <span v-else-if="p.type === 'breaking'">
+                            <span v-html="breakingText( d[p.id] )"></span>
+                        </span>
+                        <span v-else-if="p.type === 'name'">
+                            <span v-html="nameText( d )"></span>
+                        </span>
+                        <span v-else-if="p.type === 'pos'">
+                            <span v-html="posText( d[p.id] )"></span>
+                        </span>
+                        <span v-else-if="p.type === 'dando'">
+                            <span v-html="dandoText( d[p.id] )"></span>
+                        </span>
+                        <span v-else>
+                            {{ d[p.id] }}
+                        </span>
+                    </td>
+                    <!--
+                    <td><button v-on:click="swap(idx, idx - 1) ">↑</button></td>
+                    <td><input v-model="d.meet "></td>
+                    -->
+                </tr>
             </tbody>
-          </table>
-          <button v-on:click="addNewLine()">New Line</button>
-          {{ data }}
+        </table>
+        <div><button v-on:click="addNewLine() ">New Line</button></div>
+        <div id="mytable"></div>
+    </div>
+    <div class="modal_pop">
+        <div class="bg js-modal-close">
+        </div>
+        <div class="modal_pop_main">
+            <input class="modal_pop_input" type="text">
+        </div>
     </div>
 
 
+
     <script>
-    var data = [{
+        var filePath = null;
+        var app;
 
-    }];
-    function replaceArrayElements(array, targetId, sourceId) {
-        return array.reduce((resultArray, element, id, originalArray) => [
-            ...resultArray,
-            id === targetId ? originalArray[sourceId] :
-            id === sourceId ? originalArray[targetId] :
-            element
-        ], []);
-    }
+        _init();
 
-    var app = new Vue({
-        el: '#app',
-        data: {
-            message: 'Hello Vue!',
-            data: [
-            ]
-        },
-        methods: {
-            swap: function(idx0, idx1) {
-                console.log(this.data[idx0]);
-                console.log(this.data[idx1]);
-                if(this.data[idx0] && this.data[idx1]) {
-                    this.data = replaceArrayElements(this.data, idx0, idx1);
-                }
-            },
-            rank: function(val) {
-                const iter = [
-                    {rank: "G", min: 0, max: 19, color: "#000000"},
-                    {rank: "F", min: 20, max: 39, color: "#4f81bd"},
-                    {rank: "E", min: 40, max: 49, color: "#00b050"},
-                    {rank: "D", min: 50, max: 59, color: "#ffc000"},
-                    {rank: "C", min: 60, max: 69, color: "#f79646"},
-                    {rank: "B", min: 70, max: 79, color: "#ff0000"},
-                    {rank: "A", min: 80, max: 89, color: "#d99594"},
-                    {rank: "S", min: 90, max: 100, color: "#e5b8b7"},
-                ]
-                var rank = "G";
-                for(const it of iter) {
-                    if(it.min <= val && it.max >= val) {
-                        rank = it.rank;
-                    }
-                }
-                return rank
-            },
-            rankColor: function(val) {
-                const iter = [
-                    {rank: "G", min: 0, max: 19, color: "#000000"},
-                    {rank: "F", min: 20, max: 39, color: "#4f81bd"},
-                    {rank: "E", min: 40, max: 49, color: "#00b050"},
-                    {rank: "D", min: 50, max: 59, color: "#ffc000"},
-                    {rank: "C", min: 60, max: 69, color: "#f79646"},
-                    {rank: "B", min: 70, max: 79, color: "#ff0000"},
-                    {rank: "A", min: 80, max: 89, color: "#d99594"},
-                    {rank: "S", min: 90, max: 100, color: "#e5b8b7"},
-                ]
-                var color = "#000000";
-                for(const it of iter) {
-                    if(it.min <= val && it.max >= val) {
-                        color = it.color;
-                    }
-                }
-                return color
-            },
-            addNewLine: function(){
-                const blank = {
-                    name: 'New',
-                    meet: 0,
-                    power: 0,
-                    run: 0,
-                    arm: 0,
-                    def: 0,
-                    err: 0,
-                };
-                this.data.push(blank);
+        //
+        // jquery
+        //
+        $('#app > #openFile').on('click', function() {
+            try {
+                window.node.ipcRenderer.invoke('file-open', '開く')
+                    .then((data) => {
+                        // キャンセルで閉じた
+                        if (data.status === undefined) {
+                            return (false);
+                        }
+                        // 保存できなかった
+                        if (!data.status) {
+                            alert(`ファイルが開けませんでした\n${data.message}`);
+                            return (false);
+                        }
+                        console.log(data.path);
+                        filePath = data.path[0];
+                        _load();
+                    })
+                    .catch((err) => {
+                        alert(err);
+                    });
+            } catch (e) {
+                console.log(e.message)
             }
+        });
+
+        $('#app > #saveFile').on('click', function() {
+            try {
+                window.node.ipcRenderer.invoke('file-save', '保存')
+                    .then((data) => {
+                        // キャンセルで閉じた
+                        if (data.status === undefined) {
+                            return (false);
+                        }
+                        // 保存できなかった
+                        if (!data.status) {
+                            alert(`ファイルが開けませんでした\n${data.message}`);
+                            return (false);
+                        }
+                        console.log(data.path);
+                        filePath = data.path;
+                        writeFileSync(filePath, JSON.stringify(app.data));
+                        app.modify = false;
+                    })
+                    .catch((err) => {
+                        alert(err);
+                    });
+            } catch (e) {
+                console.log(e.message)
+            }
+        });
+
+        $('#app > #overwriteSaveFile').on('click', function() {
+            try {
+                writeFileSync(filePath, JSON.stringify(app.data));
+                app.modify = false;
+            } catch (e) {
+                console.log(e.message)
+            }
+        });
+        $('.modal_pop').hide();
+        $('.js-modal-close').on('click', function() {
+            $('.modal_pop').fadeOut();
+        });
+
+        function _init() {
+            var text = filePath ? readFileSync(filePath) : '[{}]';
+            var input_data = JSON.parse(text);
+
+            app = new Vue({
+                el: '#app',
+                data: {
+                    message: 'Hello Vue!',
+                    params: params,
+                    data: input_data,
+                    table: null,
+                    modify: false
+                },
+                watch: {
+                    data: function(newVal, oldVal) {
+                        if (this.table) {
+                            this.table.setData(newVal);
+                        }
+                        this.modify = true;
+                    }
+                },
+                methods: {
+                    //
+                    // Draw
+                    //
+                    rank: function(val) {
+                        var rank = " ";
+                        for (const it of rankData) {
+                            if (it.min <= val && it.max >= val) {
+                                rank = it.rank;
+                            }
+                        }
+                        return rank
+                    },
+                    rankColor: function(val) {
+                        var color = "#000000 ";
+                        for (const it of rankData) {
+                            if (it.min <= val && it.max >= val) {
+                                color = it.color;
+                            }
+                        }
+                        return color
+                    },
+                    nameText: function(d) {
+                        return $('<div>', {
+                            text: d.name
+                        }).prop('outerHTML');
+                    },
+                    posText: function(raw) {
+                        try {
+                            return raw;
+                        } catch (e) {
+                            console.log(e.message);
+                        }
+                    },
+                    dandoText: function(n) {
+                        try {
+                            var d = dandoData.find(e => {
+                                return e.num == n
+                            });
+                            return $('<span>', {
+                                text: d.text,
+                            }).css("color", d.color).prop('outerHTML') + n;
+                        } catch (e) {
+                            console.log(e.message);
+                        }
+                    },
+                    breakingText: function(raw) {
+                        try {
+                            var res = [];
+                            for (var e of raw.split(/\s/)) {
+
+                                var title, dir, num;
+                                [title, dir, num] = e.split(/:/);
+                                dir = dirText[dir] ? dirText[dir] : dir;
+                                res.push([title, dir, num].join(' '));
+                            }
+
+                            return res.join('<br>');
+                        } catch (e) {
+                            console.log(e.message);
+                        }
+                    },
+                    specialText: function(raw) {
+                        try {
+                            var a = raw.split(/\s/);
+                            var ap = [];
+                            var an = [];
+                            var am = [];
+                            var res_p = document.createElement('span');
+                            var res_n = document.createElement('span');
+                            var res_m = document.createElement('span');
+                            res_p.setAttribute('id', 'special_p');
+                            res_n.setAttribute('id', 'special_n');
+                            for (var e of a) {
+                                var m = e.match(/(^[\+\-])/);
+                                if (m && m[0] == '+') {
+                                    e = e.replace('+', '');
+                                    ap.push(e);
+                                } else if (m && m[0] == '-') {
+                                    e = e.replace('-', '');
+                                    an.push(e);
+                                } else {
+                                    am.push(e);
+                                }
+                            }
+                            res_p.appendChild(document.createTextNode(ap.join(' ')));
+                            res_n.appendChild(document.createTextNode(an.join(' ')));
+                            res_m.appendChild(document.createTextNode(am.join(' ')));
+                            return [res_p.outerHTML, res_n.outerHTML, res_m.outerHTML].join(' ');
+                        } catch (e) {
+                            console.log(e.message);
+                        }
+                    },
+                    //
+                    // Edit
+                    //
+                    swap: function(idx0, idx1) {
+                        if (this.data[idx0] && this.data[idx1]) {
+                            this.data = replaceArrayElements(this.data, idx0, idx1);
+                        }
+                    },
+                    addNewLine: function() {
+                        const blank = {};
+                        this.data.push(blank);
+                    },
+                }
+            });
+
+            //
+            // jexcel init
+            //
+            app.table = jexcel(document.getElementById('mytable'), {
+                data: app.data,
+                columns: params.map(e => {
+                    var ret = {
+                        name: e.id,
+                        title: e.title,
+                        width: (e.width ? e.width : 50)
+                    }
+                    if (e.type === 'special') {
+                        //ret.editor = customColumn;
+                    }
+                    return ret
+                }),
+                onchange: function(instance, cell, c, r, value) {
+                    app.data = this.getJson();
+                }
+            });
         }
-    });
+
+        function _load() {
+            var text = filePath ? readFileSync(filePath) : '[{}]';
+            var input_data = JSON.parse(text);
+
+            app.data = input_data;
+        }
     </script>
 </body>
 
