@@ -25,34 +25,38 @@
             <span v-if="modify">*Overwrite</span>
             <span v-else>Overwrite</span>
         </button>
+        <input type="checkbox" id="show_f" v-model="show_f">
+        <label for="show_f">野手</label>
+        <input type="checkbox" id="show_p" v-model="show_p">
+        <label for="show_p">投手</label>
         <table class="table">
             <thead>
                 <tr>
-                    <th v-for="(p, idx) in params">
+                    <th v-for="(p, idx) in params.filter( (p) => {return (!p.statusType || (p.statusType == 'f' && show_f) || (p.statusType == 'p' && show_p))})">
                         {{ p.title }}
                     </th>
                 </tr>
             </thead>
             <tbody>
-                <tr v-for="(d, idx) in data">
-                    <td v-for="(p, idx) in params">
-                        <span v-if="p.type === 'status'">
+                <tr v-for=" (d, idx) in data">
+                    <td v-for="(p, idx) in params.filter( (p) => {return (!p.statusType || (p.statusType == 'f' && show_f) || (p.statusType == 'p' && show_p))})">
+                        <span v-if="p.type==='status'">
                             <b v-bind:style="{color:rankColor(d[p.id])}">{{ rank( d[p.id] ) }}</b>
                             ({{ d[p.id] }})
                         </span>
-                        <span v-else-if="p.type === 'special'">
+                        <span v-else-if="p.type==='special'">
                             <span v-html="specialText( d[p.id] )"></span>
                         </span>
-                        <span v-else-if="p.type === 'breaking'">
+                        <span v-else-if="p.type==='breaking'">
                             <span v-html="breakingText( d[p.id] )"></span>
                         </span>
-                        <span v-else-if="p.type === 'name'">
+                        <span v-else-if="p.type==='name'">
                             <span v-html="nameText( d )"></span>
                         </span>
-                        <span v-else-if="p.type === 'pos'">
+                        <span v-else-if="p.type==='pos'">
                             <span v-html="posText( d[p.id] )"></span>
                         </span>
-                        <span v-else-if="p.type === 'dando'">
+                        <span v-else-if="p.type==='dando'">
                             <span v-html="dandoText( d[p.id] )"></span>
                         </span>
                         <span v-else>
@@ -60,13 +64,13 @@
                         </span>
                     </td>
                     <!--
-                    <td><button v-on:click="swap(idx, idx - 1) ">↑</button></td>
-                    <td><input v-model="d.meet "></td>
+                    <td><button v-on:click="swap(idx, idx - 1)">↑</button></td>
+                    <td><input v-model="d.meet"></td>
                     -->
                 </tr>
             </tbody>
         </table>
-        <div><button v-on:click="addNewLine() ">New Line</button></div>
+        <div><button v-on:click="addNewLine()">New Line</button></div>
         <div id="mytable"></div>
     </div>
     <div class="modal_pop">
@@ -161,6 +165,8 @@
                 data: {
                     message: 'Hello Vue!',
                     params: params,
+                    show_f: true,
+                    show_p: true,
                     data: input_data,
                     table: null,
                     modify: false
@@ -178,7 +184,7 @@
                     // Draw
                     //
                     rank: function(val) {
-                        var rank = " ";
+                        var rank = "";
                         for (const it of rankData) {
                             if (it.min <= val && it.max >= val) {
                                 rank = it.rank;
@@ -187,7 +193,7 @@
                         return rank
                     },
                     rankColor: function(val) {
-                        var color = "#000000 ";
+                        var color = "#000000";
                         for (const it of rankData) {
                             if (it.min <= val && it.max >= val) {
                                 color = it.color;
@@ -290,6 +296,8 @@
                     var ret = {
                         name: e.id,
                         title: e.title,
+                        type: e.jexcelType ? e.jexcelType : null,
+                        source: e.source ? e.source : null,
                         width: (e.width ? e.width : 50)
                     }
                     if (e.type === 'special') {
